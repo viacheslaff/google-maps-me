@@ -1,13 +1,11 @@
-var fs = require('fs'),
-    Q = require('q'),
+var Q = require('q'),
     xml2js = require('xml2js'),
     mapsMe = require('./mapsMe'),
     colours = require('./colours'),
-    parser = new xml2js.Parser();
+    parser = new xml2js.Parser(),
+    AdmZip = require('adm-zip');
 
-var readFile = Q.denodeify(fs.readFile),
-    writeFile = Q.denodeify(fs.writeFile),
-    parseString = Q.denodeify(parser.parseString);
+var parseString = Q.denodeify(parser.parseString);
 
 var inputFile = process.argv[2],
     outputFile = process.argv[3];
@@ -16,7 +14,17 @@ if (!inputFile || !outputFile) {
     throw new Error('No input or output file specified');
 }
 
-readFile(inputFile)
+var inputZip = new AdmZip(inputFile),
+    entries = inputZip.getEntries(),
+    kmlFileName;
+
+if (entries.length !== 1) {
+    throw new Error('Wrong number of files inside archive: ' + entries.length);
+}
+
+kmlFileName = entries[0].name;
+
+Q.resolve(inputZip.readAsText(kmlFileName))
     .then(parseString)
     .then(transformXmlObject)
     .then(outputResult)
@@ -71,5 +79,8 @@ function getClosestColourName(rgb) {
 function outputResult(xmlObject) {
     var builder = new xml2js.Builder();
     var xml = builder.buildObject(xmlObject);
-    return writeFile(outputFile, xml);
+
+    var outputZip = new AdmZip();
+    outputZip.addFile(kmlFileName, new Buffer(xml));
+    outputZip.writeZip(outputFile);
 }
