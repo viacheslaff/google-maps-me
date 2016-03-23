@@ -6,9 +6,17 @@ var fs = require('fs'),
     parser = new xml2js.Parser();
 
 var readFile = Q.denodeify(fs.readFile),
+    writeFile = Q.denodeify(fs.writeFile),
     parseString = Q.denodeify(parser.parseString);
 
-readFile('samples/sample_google_maps.kml')
+var inputFile = process.argv[2],
+    outputFile = process.argv[3];
+
+if (!inputFile || !outputFile) {
+    throw new Error('No input or output file specified');
+}
+
+readFile(inputFile)
     .then(parseString)
     .then(transformXmlObject)
     .then(outputResult)
@@ -63,5 +71,5 @@ function getClosestColourName(rgb) {
 function outputResult(xmlObject) {
     var builder = new xml2js.Builder();
     var xml = builder.buildObject(xmlObject);
-    console.log(xml);
+    return writeFile(outputFile, xml);
 }
