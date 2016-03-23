@@ -18,11 +18,15 @@ var inputZip = new AdmZip(inputFile),
     entries = inputZip.getEntries(),
     kmlFileName;
 
-if (entries.length !== 1) {
-    throw new Error('Wrong number of files inside archive: ' + entries.length);
+for (var i = 0; i < entries.length; i++) {
+    if (entries[i].name.match(/\.kml$/i)) {
+        kmlFileName = entries[i].name;
+    }
 }
 
-kmlFileName = entries[0].name;
+if (!kmlFileName) {
+    throw new Error('Cannot find .kml file inside archive: ' + entries);
+}
 
 Q.resolve(inputZip.readAsText(kmlFileName))
     .then(parseString)
@@ -54,7 +58,8 @@ function getNewStyleUrl(styleUrl) {
         rgb = colours.hexToRgb(match[1]);
     }
     else {
-        throw new Error('Cannot parse colour from styleUrl: ' + styleUrl)
+        console.log('Cannot parse colour from styleUrl: ' + styleUrl);
+        return '';
     }
 
     return '#placemark-' + getClosestColourName(rgb);
