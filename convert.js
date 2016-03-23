@@ -42,7 +42,7 @@ function getNewStyleUrl(styleUrl) {
     var rgb,
         match;
 
-    if (typeof styleUrl === 'string' && (match = styleUrl.match(/-([0-9a-f]{6})$/i))) {
+    if (typeof styleUrl === 'string' && (match = styleUrl.match(/-([0-9a-f]{6})(-|$)/i))) {
         rgb = colours.hexToRgb(match[1]);
     }
     else {
